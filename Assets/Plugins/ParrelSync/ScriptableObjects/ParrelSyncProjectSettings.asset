@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3ad70174b079c2f4ebc7931d3dd1af6f, type: 3}
-  m_Name: DefaultPrefabObjects
-  m_EditorClassIdentifier: FishNet.Runtime::FishNet.Managing.Object.DefaultPrefabObjects
-  _prefabs: []
+  m_Script: {fileID: 11500000, guid: c0011418c9d75434988a06b6df93b283, type: 3}
+  m_Name: ParrelSyncProjectSettings
+  m_EditorClassIdentifier: ParrelSync::ParrelSync.ParrelSyncProjectSettings
+  m_OptionalSymbolicLinkFolders: []
