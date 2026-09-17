@@ -742,7 +742,7 @@ MonoBehaviour:
   NetworkConfig:
     ProtocolVersion: 0
     NetworkTransport: {fileID: 977723694}
-    PlayerPrefab: {fileID: 0}
+    PlayerPrefab: {fileID: 8104605199345164405, guid: 0ebfe574748fc5d4fa578a4c3ce0e052, type: 3}
     Prefabs:
       NetworkPrefabsLists: []
     TickRate: 30
@@ -763,6 +763,7 @@ MonoBehaviour:
     NetworkTopology: 0
     UseCMBService: 0
     AutoSpawnPlayerPrefabClientSide: 1
+    NetworkMessageMetrics: 1
     NetworkProfilingMetrics: 1
     OldPrefabList: []
   RunInBackground: 1
@@ -902,6 +903,7 @@ MonoBehaviour:
   hostButton: {fileID: 732214541}
   clientButton: {fileID: 1695158732}
   statusText: {fileID: 1872607296}
+  gameplaySceneName: Gameplay 1
 --- !u!1 &1695158730
 GameObject:
   m_ObjectHideFlags: 0
