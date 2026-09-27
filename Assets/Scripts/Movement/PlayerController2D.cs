@@ -1,59 +1,105 @@
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 
-public class PlayerController2D : NetworkBehaviour
+public class PlayerController : NetworkBehaviour
 {
-    [Header("Movement Settings")]
-    [SerializeField] private float moveSpeed = 5f;
+    [Header("Network Sync Variables")]
+    public NetworkVariable<int> health = new NetworkVariable<int>(100);
+    public NetworkVariable<int> score = new NetworkVariable<int>(0);
 
-    private SpriteRenderer spriteRenderer;
-
-    private void Awake()
-    {
-        spriteRenderer = GetComponent<SpriteRenderer>();
-    }
+    [Header("UI References")]
+    [SerializeField] private Slider healthSlider;
+    [SerializeField] private TextMeshProUGUI scoreText;
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
 
-        // Mengatur warna indikator kepemilikan lokal menggunakan SpriteRenderer
+        // Register event listener OnValueChanged 
+        health.OnValueChanged += OnHealthChanged;
+        score.OnValueChanged += OnScoreChanged;
+
+        // Inisialisasi tampilan UI awal saat spawn 
+        UpdateHealthUI(health.Value);
+        UpdateScoreUI(score.Value);
+
         if (IsOwner)
         {
-            if (spriteRenderer != null) spriteRenderer.color = Color.green; // Player Lokal = Hijau
-
-            // Mengatur posisi spawn acak pada bidang 2D (sumbu X dan Y)
-            float randomX = Random.Range(-3f, 3f);
-            float randomY = Random.Range(-3f, 3f);
-            transform.position = new Vector3(randomX, randomY, 0f);
+            GetComponent<Renderer>().material.color = Color.green;
         }
         else
         {
-            if (spriteRenderer != null) spriteRenderer.color = Color.red;   // Player Lain = Merah
+            GetComponent<Renderer>().material.color = Color.red;
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+
+        // Selalu cabut listener saat objek di-despawn untuk mencegah memory leak 
+        health.OnValueChanged -= OnHealthChanged;
+        score.OnValueChanged -= OnScoreChanged;
+    }
+
+    // Callback saat health berubah 
+    private void OnHealthChanged(int previousValue, int newValue)
+    {
+        UpdateHealthUI(newValue);
+    }
+
+    // Callback saat score berubah 
+    private void OnScoreChanged(int previousValue, int newValue)
+    {
+        UpdateScoreUI(newValue);
+    }
+
+    private void UpdateHealthUI(int currentHealth)
+    {
+        if (healthSlider != null)
+        {
+            healthSlider.value = currentHealth;
+        }
+    }
+
+    private void UpdateScoreUI(int currentScore)
+    {
+        if (scoreText != null)
+        {
+            scoreText.text = "Score: " + currentScore;
         }
     }
 
     private void Update()
     {
-        // KUNCI UTAMA MULTIPLAYER:
-        // Proses input dan pergerakan HANYA dijalankan oleh pemilik objek lokal
         if (!IsOwner) return;
 
-        HandleMovement();
+        // Simulasi input keyboard untuk pengujian 
+        // Tekan 'K' untuk mengurangi HP 
+        if (Input.GetKeyDown(KeyCode.K))
+        {
+            TakeDamageServerRpc(10);
+        }
+
+        // Tekan 'L' untuk menambah Score 
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            AddScoreServerRpc(5);
+        }
     }
 
-    private void HandleMovement()
+    // Karena WritePermission = Server, pemicuan dari Client membutuhkan ServerRpc 
+    [ServerRpc]
+    private void TakeDamageServerRpc(int damageAmount)
     {
-        // Membaca input sumbu horizontal dan vertikal
-        float horizontal = Input.GetAxis("Horizontal");
-        float vertical = Input.GetAxis("Vertical");
-        
-        Vector2 moveDirection = new Vector2(horizontal, vertical).normalized;
+        health.Value = Mathf.Max(0, health.Value - damageAmount);
+    }
 
-        if (moveDirection.sqrMagnitude >= 0.01f)
-        {
-            // Memindahkan posisi karakter dalam koordinat 2D (World Space)
-            transform.Translate((Vector3)moveDirection * moveSpeed * Time.deltaTime, Space.World);
-        }
+    [ServerRpc]
+    private void AddScoreServerRpc(int scoreAmount)
+    {
+        score.Value += scoreAmount;
     }
 }
