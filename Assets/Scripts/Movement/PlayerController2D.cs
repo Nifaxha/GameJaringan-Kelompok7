@@ -13,15 +13,21 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private Slider healthSlider;
     [SerializeField] private TextMeshProUGUI scoreText;
 
+    [Header("Combat Settings (Modul 5)")]
+    [SerializeField] private GameObject bulletPrefab;
+    [SerializeField] private Transform firePoint;
+    [SerializeField] private ParticleSystem muzzleFlashVFX;
+    
+    [Header("Movement Settings")]
+    [SerializeField] private float moveSpeed = 5f;
+
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
 
-        // Register event listener OnValueChanged 
         health.OnValueChanged += OnHealthChanged;
         score.OnValueChanged += OnScoreChanged;
 
-        // Inisialisasi tampilan UI awal saat spawn 
         UpdateHealthUI(health.Value);
         UpdateScoreUI(score.Value);
 
@@ -38,59 +44,75 @@ public class PlayerController : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         base.OnNetworkDespawn();
-
-        // Selalu cabut listener saat objek di-despawn untuk mencegah memory leak 
         health.OnValueChanged -= OnHealthChanged;
         score.OnValueChanged -= OnScoreChanged;
     }
 
-    // Callback saat health berubah 
     private void OnHealthChanged(int previousValue, int newValue)
     {
         UpdateHealthUI(newValue);
     }
 
-    // Callback saat score berubah 
     private void OnScoreChanged(int previousValue, int newValue)
     {
         UpdateScoreUI(newValue);
     }
 
+    public void TakeDamage(int amount)
+    {
+        if (!IsServer) return;
+        health.Value = Mathf.Max(0, health.Value - amount);
+    }
+
     private void UpdateHealthUI(int currentHealth)
     {
-        if (healthSlider != null)
-        {
-            healthSlider.value = currentHealth;
-        }
+        if (healthSlider != null) healthSlider.value = currentHealth;
     }
 
     private void UpdateScoreUI(int currentScore)
     {
-        if (scoreText != null)
-        {
-            scoreText.text = "Score: " + currentScore;
-        }
+        if (scoreText != null) scoreText.text = "Score: " + currentScore;
     }
 
     private void Update()
     {
         if (!IsOwner) return;
 
-        // Simulasi input keyboard untuk pengujian 
-        // Tekan 'K' untuk mengurangi HP 
+        // --- KODE PERGERAKAN 2D ---
+        float moveX = Input.GetAxis("Horizontal");
+        float moveY = Input.GetAxis("Vertical"); 
+
+        Vector3 moveDirection = new Vector3(moveX, moveY, 0).normalized;
+        transform.Translate(moveDirection * moveSpeed * Time.deltaTime, Space.World);
+
+        // Membalik arah hadap karakter menggunakan Rotasi (agar FirePoint ikut berputar 180 derajat)
+        if (moveX > 0)
+        {
+            transform.rotation = Quaternion.Euler(0, 0, 0); // Menghadap kanan
+        }
+        else if (moveX < 0)
+        {
+            transform.rotation = Quaternion.Euler(0, 180, 0); // Menghadap kiri
+        }
+        // --------------------------
+        // -----------------------
+
         if (Input.GetKeyDown(KeyCode.K))
         {
             TakeDamageServerRpc(10);
         }
 
-        // Tekan 'L' untuk menambah Score 
         if (Input.GetKeyDown(KeyCode.L))
         {
             AddScoreServerRpc(5);
         }
+
+        if (Input.GetButtonDown("Fire1") || Input.GetKeyDown(KeyCode.Space))
+        {
+            ShootServerRpc();
+        }
     }
 
-    // Karena WritePermission = Server, pemicuan dari Client membutuhkan ServerRpc 
     [ServerRpc]
     private void TakeDamageServerRpc(int damageAmount)
     {
@@ -101,5 +123,36 @@ public class PlayerController : NetworkBehaviour
     private void AddScoreServerRpc(int scoreAmount)
     {
         score.Value += scoreAmount;
+    }
+
+   [ServerRpc]
+    private void ShootServerRpc()
+    {
+        if (bulletPrefab == null || firePoint == null) return;
+
+        GameObject bulletInstance = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+        
+        // --- TAMBAHAN BARU: Beritahu peluru siapa penembaknya ---
+        Bullet bulletScript = bulletInstance.GetComponent<Bullet>();
+        if (bulletScript != null)
+        {
+            bulletScript.shooter = this;
+        }
+        // --------------------------------------------------------
+
+        NetworkObject bulletNetworkObject = bulletInstance.GetComponent<NetworkObject>();
+        bulletNetworkObject.Spawn();
+
+        PlayShootEffectsClientRpc();
+    }
+
+    
+    [ClientRpc]
+    private void PlayShootEffectsClientRpc()
+    {
+        if (muzzleFlashVFX != null)
+        {
+            muzzleFlashVFX.Play();
+        }
     }
 }
