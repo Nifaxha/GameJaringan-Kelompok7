@@ -4,7 +4,7 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.SceneManagement; // Tambahkan ini untuk LoadSceneMode
 
-public class NetworkManagerUI : MonoBehaviour
+public class NetworkManagerUIA : MonoBehaviour
 {
     [Header("UI References")]
     [SerializeField] private Button hostButton; //[cite: 2]

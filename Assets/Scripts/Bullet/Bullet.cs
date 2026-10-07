@@ -8,7 +8,7 @@ public class Bullet : NetworkBehaviour
     [SerializeField] private float destroyTime = 3f;
 
     // Menyimpan data siapa yang menembakkan peluru ini
-    public PlayerController shooter;
+    public PlayerController2D shooter2d;
 
     public override void OnNetworkSpawn()
     {
@@ -31,18 +31,18 @@ public class Bullet : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        if (other.TryGetComponent<PlayerController>(out PlayerController targetPlayer))
+        if (other.TryGetComponent<PlayerController2D>(out PlayerController2D targetPlayer))
         {
             // Jangan sampai peluru melukai diri sendiri
-            if (targetPlayer == shooter) return;
+            if (targetPlayer == shooter2d) return;
 
             // Kurangi HP musuh
             targetPlayer.TakeDamage(damageAmount);
 
             // Tambahkan skor ke penembak (misal +10 skor per hit)
-            if (shooter != null)
+            if (shooter2d != null)
             {
-                shooter.score.Value += 10; 
+                shooter2d.score.Value += 10; 
             }
 
             DestroyBullet();
@@ -56,15 +56,16 @@ public class Bullet : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        if (other.TryGetComponent<PlayerController>(out PlayerController targetPlayer))
+        if (other.TryGetComponent<PlayerController2D>(out PlayerController2D targetPlayer))
         {
-            if (targetPlayer == shooter) return;
+            // Jangan sampai peluru melukai diri sendiri
+            if (targetPlayer == shooter2d) return;
 
             targetPlayer.TakeDamage(damageAmount);
 
-            if (shooter != null)
+            if (shooter2d != null)
             {
-                shooter.score.Value += 10;
+                shooter2d.score.Value += 10;
             }
 
             DestroyBullet();

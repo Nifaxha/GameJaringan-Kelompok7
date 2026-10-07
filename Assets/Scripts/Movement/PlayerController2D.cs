@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-public class PlayerController : NetworkBehaviour
+public class PlayerController2D : NetworkBehaviour
 {
     [Header("Network Sync Variables")]
     public NetworkVariable<int> health = new NetworkVariable<int>(100);
@@ -136,7 +136,7 @@ public class PlayerController : NetworkBehaviour
         Bullet bulletScript = bulletInstance.GetComponent<Bullet>();
         if (bulletScript != null)
         {
-            bulletScript.shooter = this;
+            bulletScript.shooter2d = this;
         }
         // --------------------------------------------------------
 
