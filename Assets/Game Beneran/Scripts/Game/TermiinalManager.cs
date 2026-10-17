@@ -56,13 +56,18 @@ public class TerminalManager : NetworkBehaviour
     {
         if (cmd == "erase the laser")
         {
-            // Memanggil fungsi jaringan untuk menghancurkan rintangan
             EraseAllHazards();
             PrintLog("<color=green>[Terminal]</color> Executed: Laser obstacle erased from the system.");
         }
-        else if (cmd == "jump")
+        else if (cmd == "open gate")
         {
-            PrintLog("<color=yellow>[Terminal]</color> Hint sent: Tell Runner to jump.");
+            OpenGate();
+            PrintLog("<color=green>[Terminal]</color> Access Granted: Gate opened.");
+        }
+        else if (cmd == "spawn platform")
+        {
+            SpawnPlatforms();
+            PrintLog("<color=green>[Terminal]</color> Executed: Hologram platform activated.");
         }
         else
         {
@@ -80,6 +85,29 @@ public class TerminalManager : NetworkBehaviour
             {
                 netObj.Despawn(); // Menghapus secara tersinkronisasi di jaringan
             }
+        }
+    }
+
+    private void OpenGate()
+    {
+        // Mencari pintu besi (Gate) dan menghapusnya
+        GameObject[] gates = GameObject.FindGameObjectsWithTag("Gate");
+        foreach (GameObject gate in gates)
+        {
+            if (gate.TryGetComponent(out NetworkObject netObj))
+            {
+                netObj.Despawn(); 
+            }
+        }
+    }
+
+    private void SpawnPlatforms()
+    {
+        // Mencari semua platform hologram dan menyalakannya
+        HologramPlatform[] platforms = FindObjectsByType<HologramPlatform>(FindObjectsSortMode.None);
+        foreach (HologramPlatform platform in platforms)
+        {
+            platform.ActivatePlatform();
         }
     }
 }
